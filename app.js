@@ -3,6 +3,14 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
 const app = express();
+const nodemailer = require('nodemailer');
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'apexconsultancy.et@gmail.com', // Your Gmail email address
+    pass: 'Apex@123', // Your Gmail password
+  },
+});
 
 // Serve static files from the "public" directory
 app.use(express.static(path.join(__dirname, 'public')));
@@ -37,6 +45,29 @@ app.get('/form-download', (req, res) => {
 app.get('/contact', (req, res) => {
   res.render('contact');
 });
+
+app.post('/submit-contact-form', async (req, res) => {
+  // Get the form data from the request body
+  const { name, email, message } = req.body;
+
+  // Compose the email
+  const mailOptions = {
+    from: process.env.GMAIL_USER,
+    to: 'apexconsultancy.et@gmail.com',
+    subject: 'New Contact Form Submission',
+    text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`,
+  };
+
+  // Send the email
+  try {
+    await transporter.sendMail(mailOptions);
+    res.status(200).send('Email sent successfully');
+  } catch (error) {
+    console.error('Error sending email:', error);
+    res.status(500).send('Error sending email');
+  }
+});
+
 
 // Start the server on the port specified in the `PORT` environment variable, or on port 3000 if it is not set
 const PORT = process.env.PORT || 3000;
